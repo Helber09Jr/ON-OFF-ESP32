@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Foco IoT</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="pagina-login">
+
+  <div class="contenedor-login">
+
+    <div class="icono-top">
+      <svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg" width="72" height="72">
+        <ellipse cx="40" cy="38" rx="34" ry="34" class="brillo-login"/>
+        <path d="M40 6 C22 6 8 20 8 38 C8 53 17 65 28 71 L28 82 L52 82 L52 71 C63 65 72 53 72 38 C72 20 58 6 40 6 Z" class="bola-login"/>
+        <path d="M35 70 L35 60 Q40 54 45 60 L45 70" class="filamento-login"/>
+        <rect x="28" y="82" width="24" height="6" rx="2" class="base-login"/>
+        <rect x="30" y="88" width="20" height="6" rx="2" class="base-login"/>
+        <rect x="32" y="94" width="16" height="5" rx="2" class="base-login"/>
+      </svg>
+    </div>
+
+    <h1>Control de Foco</h1>
+    <p class="subtitulo">Sistema IoT &middot; ESP32</p>
+
+    <div id="mensaje" class="mensaje oculto"></div>
+
+    <div class="form-grupo">
+      <label for="correo">Correo</label>
+      <input type="email" id="correo" placeholder="correo@ejemplo.com" autocomplete="email">
+    </div>
+
+    <div class="form-grupo">
+      <label for="clave">Contrase&ntilde;a</label>
+      <input type="password" id="clave" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
+    </div>
+
+    <button class="btn-primary" onclick="iniciarSesion()">Iniciar Sesi&oacute;n</button>
+    <button class="btn-secondary" onclick="crearCuenta()">Crear Cuenta</button>
+
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>
