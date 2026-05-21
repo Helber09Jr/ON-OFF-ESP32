@@ -3,70 +3,104 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel IoT — UNJBG ESIS</title>
+  <title>Panel IoT &mdash; UNJBG ESIS</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="pagina-panel">
 
+  <!-- Header institucional -->
   <div class="header-inst">
     <div class="header-inst-izq">
       <img src="img/esis.png" alt="ESIS" class="logo-esis" onerror="this.style.display='none'">
       <div class="header-inst-texto">
         <span class="inst-siglas">UNJBG | FAING | ESIS</span>
         <span class="inst-titulo-completo">Sistema IoT de Control de Iluminacion</span>
+        <span class="inst-carrera">Ingenieria en Informatica y Sistemas</span>
       </div>
     </div>
     <span class="grupo-chip">Grupo 05</span>
   </div>
 
+  <!-- Navbar -->
   <nav class="navbar">
     <div class="nav-links" id="nav-links">
-      <a href="#" class="nav-link activo" onclick="cerrarMenu()">Inicio</a>
-      <a href="#" class="nav-link" onclick="cerrarMenu()">Dispositivo</a>
-      <a href="#" class="nav-link" onclick="cerrarMenu()">Proyecto</a>
-      <a href="#" class="nav-link nav-salir" onclick="cerrarSesion(); return false;">Salir</a>
+      <a href="#" class="nav-link activo" id="lnk-inicio"
+         onclick="mostrarSeccion('inicio'); cerrarMenu(); return false;">Inicio</a>
+      <a href="#" class="nav-link" id="lnk-dispositivos"
+         onclick="mostrarSeccion('dispositivos'); cerrarMenu(); return false;">Dispositivos</a>
+      <a href="https://docs.google.com/presentation/d/1O-HLyU-0BvO77fIaWTgOuhHMI5j6WEW7RzzZpHuRR_Q/edit?slide=id.p5#slide=id.p5"
+         class="nav-link" target="_blank" onclick="cerrarMenu()">Proyecto</a>
+      <a href="#" class="nav-link nav-salir"
+         onclick="cerrarSesion(); return false;">Salir</a>
     </div>
     <span class="nav-usuario" id="email-usuario"></span>
     <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
-      <span></span>
-      <span></span>
-      <span></span>
+      <span></span><span></span><span></span>
     </button>
   </nav>
 
-  <main>
-    <div class="tarjeta" id="tarjeta">
+  <!-- Seccion Inicio: grid de dispositivos -->
+  <section id="sec-inicio" class="seccion">
+    <div class="dispositivos-grid" id="dispositivos-grid">
+      <div class="sin-dispositivos oculto" id="sin-dispositivos">
+        <p>No hay dispositivos registrados.</p>
+        <button class="btn-agregar-primero"
+                onclick="mostrarSeccion('dispositivos')">+ Agregar Dispositivo</button>
+      </div>
+    </div>
+  </section>
 
-      <h2>Control de Foco</h2>
-      <p class="subtarjeta">Habitacion Principal</p>
+  <!-- Seccion Dispositivos: formulario + lista -->
+  <section id="sec-dispositivos" class="seccion oculto">
+    <div class="form-dis-wrap">
 
-      <div class="foco-contenedor" id="foco-contenedor">
-        <svg id="foco-svg" viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="40" cy="38" rx="36" ry="36" class="foco-brillo"/>
-          <path d="M40 6 C22 6 8 20 8 38 C8 53 17 65 28 71 L28 82 L52 82 L52 71 C63 65 72 53 72 38 C72 20 58 6 40 6 Z" class="foco-bola"/>
-          <path d="M35 70 L35 60 Q40 54 45 60 L45 70" class="foco-filamento"/>
-          <rect x="28" y="82" width="24" height="6" rx="2" class="foco-base"/>
-          <rect x="30" y="88" width="20" height="6" rx="2" class="foco-base"/>
-          <rect x="32" y="94" width="16" height="5" rx="2" class="foco-base"/>
-        </svg>
+      <div class="card-gestion">
+        <h3 class="gestion-titulo">Agregar Dispositivo</h3>
+        <p class="gestion-sub">El ID debe coincidir con el configurado en el ESP32</p>
+        <div id="msg-dispositivo" class="mensaje oculto"></div>
+
+        <div class="form-grupo">
+          <label>Nombre</label>
+          <input type="text" id="d-nombre" placeholder="Foco Sala">
+        </div>
+        <div class="form-grupo">
+          <label>ID del dispositivo</label>
+          <input type="text" id="d-id" placeholder="foco_sala">
+          <small class="campo-hint">Solo letras, numeros y guion bajo</small>
+        </div>
+        <div class="form-grupo">
+          <label>Ubicacion</label>
+          <input type="text" id="d-ubicacion" placeholder="Sala">
+        </div>
+        <div class="form-grupo">
+          <label>Tipo</label>
+          <select id="d-tipo">
+            <option value="foco">Foco</option>
+            <option value="toma">Toma Corriente</option>
+            <option value="ventilador">Ventilador</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <button class="btn-primary" style="margin-top:10px" onclick="agregarDispositivo()">Agregar Dispositivo</button>
       </div>
 
-      <div class="estado-badge badge-off" id="estado-badge">
-        <span id="texto-estado">APAGADO</span>
+      <div class="card-gestion">
+        <h3 class="gestion-titulo">Dispositivos Registrados</h3>
+        <div id="lista-dispositivos">
+          <p class="lista-vacia">Sin dispositivos aun.</p>
+        </div>
       </div>
-
-      <button id="btn-toggle" class="btn-toggle btn-encender-mode" onclick="toggleFoco()">
-        ENCENDER
-      </button>
 
     </div>
-  </main>
+  </section>
 
+  <!-- Footer -->
   <footer class="footer">
     <div class="footer-inst">
       <span>UNJBG</span><span class="sep">|</span>
       <span>FAING</span><span class="sep">|</span>
-      <span>ESIS</span>
+      <span>ESIS</span><span class="sep">|</span>
+      <span>Ing. en Informatica y Sistemas</span>
     </div>
     <div class="footer-grupo">
       Grupo 05 &mdash; Helber Lopez &bull; Pablo Mamani &bull; Fernando Briceno
