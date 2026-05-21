@@ -8,7 +8,6 @@
 </head>
 <body class="pagina-panel">
 
-  <!-- Header institucional -->
   <div class="header-inst">
     <div class="header-inst-izq">
       <img src="esis.png" alt="ESIS" class="logo-esis" onerror="this.style.display='none'">
@@ -21,7 +20,6 @@
     <span class="grupo-chip">Grupo 05</span>
   </div>
 
-  <!-- Navbar -->
   <nav class="navbar">
     <div class="nav-links" id="nav-links">
       <a href="#" class="nav-link activo" id="lnk-inicio"
@@ -30,8 +28,7 @@
          onclick="mostrarSeccion('dispositivos'); cerrarMenu(); return false;">Dispositivos</a>
       <a href="https://docs.google.com/presentation/d/1O-HLyU-0BvO77fIaWTgOuhHMI5j6WEW7RzzZpHuRR_Q/edit?slide=id.p5#slide=id.p5"
          class="nav-link" target="_blank" onclick="cerrarMenu()">Proyecto</a>
-      <a href="#" class="nav-link nav-salir"
-         onclick="cerrarSesion(); return false;">Salir</a>
+      <a href="#" class="nav-link nav-salir" onclick="cerrarSesion(); return false;">Salir</a>
     </div>
     <span class="nav-usuario" id="email-usuario"></span>
     <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
@@ -39,26 +36,32 @@
     </button>
   </nav>
 
-  <!-- Seccion Inicio: grid de dispositivos -->
+  <!-- Inicio -->
   <section id="sec-inicio" class="seccion">
+    <div class="sec-barra">
+      <h3 class="sec-titulo">Dispositivos</h3>
+      <span id="sec-contador" class="sec-contador">--</span>
+    </div>
     <div class="dispositivos-grid" id="dispositivos-grid">
       <div class="sin-dispositivos oculto" id="sin-dispositivos">
+        <div class="sin-icono">&#9711;</div>
         <p>No hay dispositivos registrados.</p>
-        <button class="btn-agregar-primero"
-                onclick="mostrarSeccion('dispositivos')">+ Agregar Dispositivo</button>
+        <button class="btn-agregar-primero" onclick="mostrarSeccion('dispositivos')">+ Agregar Dispositivo</button>
       </div>
     </div>
   </section>
 
-  <!-- Seccion Dispositivos: formulario + lista -->
+  <!-- Dispositivos -->
   <section id="sec-dispositivos" class="seccion oculto">
+    <div class="sec-barra">
+      <h3 class="sec-titulo">Gestion de Dispositivos</h3>
+    </div>
     <div class="form-dis-wrap">
 
       <div class="card-gestion">
-        <h3 class="gestion-titulo">Agregar Dispositivo</h3>
+        <h4 class="gestion-titulo">Agregar Dispositivo</h4>
         <p class="gestion-sub">El ID debe coincidir con el configurado en el ESP32</p>
         <div id="msg-dispositivo" class="mensaje oculto"></div>
-
         <div class="form-grupo">
           <label>Nombre</label>
           <input type="text" id="d-nombre" placeholder="Foco Sala">
@@ -81,11 +84,11 @@
             <option value="otro">Otro</option>
           </select>
         </div>
-        <button class="btn-primary" style="margin-top:10px" onclick="agregarDispositivo()">Agregar Dispositivo</button>
+        <button class="btn-primary" style="margin-top:12px" onclick="agregarDispositivo()">Agregar Dispositivo</button>
       </div>
 
       <div class="card-gestion">
-        <h3 class="gestion-titulo">Dispositivos Registrados</h3>
+        <h4 class="gestion-titulo">Dispositivos Registrados</h4>
         <div id="lista-dispositivos">
           <p class="lista-vacia">Sin dispositivos aun.</p>
         </div>
@@ -94,7 +97,6 @@
     </div>
   </section>
 
-  <!-- Footer -->
   <footer class="footer">
     <div class="footer-inst">
       <span>UNJBG</span><span class="sep">|</span>
@@ -102,9 +104,7 @@
       <span>ESIS</span><span class="sep">|</span>
       <span>Ing. en Informatica y Sistemas</span>
     </div>
-    <div class="footer-grupo">
-      Grupo 05 &mdash; Helber Lopez &bull; Pablo Mamani &bull; Fernando Briceno
-    </div>
+    <div class="footer-grupo">Grupo 05 &mdash; Helber Lopez &bull; Pablo Mamani &bull; Fernando Briceno</div>
   </footer>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
