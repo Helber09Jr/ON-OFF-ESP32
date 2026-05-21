@@ -1,4 +1,5 @@
 let cache_devs = {};
+let brillo_timers = {};
 
 auth.onAuthStateChanged(usuario => {
   if (!usuario) { window.location.href = 'index.html'; return; }
@@ -95,14 +96,23 @@ function actualizarGrid(datos) {
     const prev = cache_devs[id];
     if (!document.getElementById('card-' + id)) {
       grid.appendChild(crearCard(id, dev));
-    } else if (prev && prev.estado !== dev.estado) {
-      actualizarCard(id, dev.estado);
+    } else {
+      if (prev && prev.estado !== dev.estado) {
+        actualizarCard(id, dev.estado);
+      }
+      const brActual = dev.brillo !== undefined ? dev.brillo : 100;
+      const brPrev   = prev && prev.brillo !== undefined ? prev.brillo : 100;
+      if (prev && brPrev !== brActual) {
+        actualizarSlider(id, brActual);
+      }
     }
     cache_devs[id] = Object.assign({}, dev);
   });
 }
 
 function crearCard(id, dev) {
+  const brillo  = dev.brillo !== undefined ? dev.brillo : 100;
+  const fillPct = ((brillo - 10) / 90 * 100).toFixed(1);
   const div = document.createElement('div');
   div.id        = 'card-' + id;
   div.className = 'tarjeta dis-card' + (dev.estado ? ' encendido' : '');
@@ -123,16 +133,27 @@ function crearCard(id, dev) {
       class="btn-toggle ${dev.estado ? 'btn-apagar-mode' : 'btn-encender-mode'}"
       onclick="toggleDispositivo('${id}')">
       ${dev.estado ? 'APAGAR' : 'ENCENDER'}
-    </button>`;
+    </button>
+    <div class="brillo-wrap${dev.estado ? '' : ' oculto'}" id="brillo-wrap-${id}">
+      <div class="brillo-header">
+        <span class="brillo-label">Brillo</span>
+        <span class="brillo-valor" id="brillo-val-${id}">${brillo}%</span>
+      </div>
+      <input type="range" class="brillo-slider" id="brillo-${id}"
+        min="10" max="100" value="${brillo}"
+        style="--fill:${fillPct}%"
+        oninput="onBrilloInput('${id}', this.value)">
+    </div>`;
   return div;
 }
 
 function actualizarCard(id, estado) {
-  const card  = document.getElementById('card-' + id);
-  const foco  = document.getElementById('foco-' + id);
-  const badge = document.getElementById('badge-' + id);
-  const texto = document.getElementById('texto-' + id);
-  const btn   = document.getElementById('btn-' + id);
+  const card       = document.getElementById('card-' + id);
+  const foco       = document.getElementById('foco-' + id);
+  const badge      = document.getElementById('badge-' + id);
+  const texto      = document.getElementById('texto-' + id);
+  const btn        = document.getElementById('btn-' + id);
+  const brilloWrap = document.getElementById('brillo-wrap-' + id);
   if (!card) return;
 
   if (estado) {
@@ -145,6 +166,7 @@ function actualizarCard(id, estado) {
     texto.textContent = 'ENCENDIDO';
     btn.textContent   = 'APAGAR';
     btn.className     = 'btn-toggle btn-apagar-mode';
+    if (brilloWrap) brilloWrap.classList.remove('oculto');
   } else {
     card.classList.remove('encendido');
     foco.classList.remove('foco-on');
@@ -152,7 +174,32 @@ function actualizarCard(id, estado) {
     texto.textContent = 'APAGADO';
     btn.textContent   = 'ENCENDER';
     btn.className     = 'btn-toggle btn-encender-mode';
+    if (brilloWrap) brilloWrap.classList.add('oculto');
   }
+}
+
+function actualizarSlider(id, valor) {
+  const slider = document.getElementById('brillo-' + id);
+  const valEl  = document.getElementById('brillo-val-' + id);
+  if (slider) {
+    slider.value = valor;
+    slider.style.setProperty('--fill', ((valor - 10) / 90 * 100).toFixed(1) + '%');
+  }
+  if (valEl) valEl.textContent = valor + '%';
+}
+
+function onBrilloInput(id, valor) {
+  const v = parseInt(valor);
+  const valEl = document.getElementById('brillo-val-' + id);
+  if (valEl) valEl.textContent = v + '%';
+  const slider = document.getElementById('brillo-' + id);
+  if (slider) slider.style.setProperty('--fill', ((v - 10) / 90 * 100).toFixed(1) + '%');
+  clearTimeout(brillo_timers[id]);
+  brillo_timers[id] = setTimeout(() => cambiarBrillo(id, v), 350);
+}
+
+function cambiarBrillo(id, valor) {
+  db.ref('/dispositivos/' + id + '/brillo').set(valor);
 }
 
 function toggleDispositivo(id) {
@@ -189,7 +236,7 @@ function agregarDispositivo() {
   if (!nombre || !id || !ubicacion) { msgDis('Completa todos los campos.', 'error'); return; }
   if (!/^[a-zA-Z0-9_]+$/.test(id)) { msgDis('ID solo puede tener letras, numeros y guion bajo.', 'error'); return; }
 
-  db.ref('/dispositivos/' + id).set({ nombre, ubicacion, tipo, estado: false })
+  db.ref('/dispositivos/' + id).set({ nombre, ubicacion, tipo, estado: false, brillo: 100 })
     .then(() => {
       msgDis('Dispositivo agregado correctamente.', 'exito');
       document.getElementById('d-nombre').value    = '';
