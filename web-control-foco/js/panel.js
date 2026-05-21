@@ -39,7 +39,7 @@ function cerrarSesion() {
   auth.signOut().then(() => { window.location.href = 'index.html'; });
 }
 
-// ---- SVG DEL FOCO ----
+// ---- SVG FOCO ----
 const SVG_FOCO = `
   <svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
     <ellipse cx="40" cy="38" rx="36" ry="36" class="foco-brillo"/>
@@ -50,16 +50,26 @@ const SVG_FOCO = `
     <rect x="32" y="94" width="16" height="5" rx="2" class="foco-base"/>
   </svg>`;
 
-// ---- ESCUCHAR FIREBASE ----
+// ---- FIREBASE ----
 function escucharDispositivos() {
   db.ref('/dispositivos').on('value', snap => {
     const datos = snap.val();
     actualizarGrid(datos);
     actualizarLista(datos);
+    actualizarContador(datos);
   });
 }
 
-// ---- GRID DE CONTROL ----
+function actualizarContador(datos) {
+  const el = document.getElementById('sec-contador');
+  if (!el) return;
+  if (!datos) { el.textContent = '0 activos'; return; }
+  const total   = Object.keys(datos).length;
+  const activos = Object.values(datos).filter(d => d.estado === true).length;
+  el.textContent = `${activos} de ${total} activo${activos !== 1 ? 's' : ''}`;
+}
+
+// ---- GRID ----
 function actualizarGrid(datos) {
   const grid   = document.getElementById('dispositivos-grid');
   const sinDiv = document.getElementById('sin-dispositivos');
@@ -72,7 +82,6 @@ function actualizarGrid(datos) {
   }
   sinDiv.classList.add('oculto');
 
-  // Eliminar cards de dispositivos borrados
   Object.keys(cache_devs).forEach(id => {
     if (!datos[id]) {
       const card = document.getElementById('card-' + id);
@@ -81,7 +90,6 @@ function actualizarGrid(datos) {
     }
   });
 
-  // Agregar o actualizar
   Object.keys(datos).forEach(id => {
     const dev  = datos[id];
     const prev = cache_devs[id];
@@ -130,8 +138,7 @@ function actualizarCard(id, estado) {
   if (estado) {
     card.classList.add('encendido');
     foco.classList.add('foco-on');
-    foco.classList.remove('flash');
-    void foco.offsetWidth;
+    foco.classList.remove('flash'); void foco.offsetWidth;
     foco.classList.add('flash');
     setTimeout(() => foco.classList.remove('flash'), 650);
     badge.className   = 'estado-badge badge-on';
@@ -157,10 +164,7 @@ function toggleDispositivo(id) {
 function actualizarLista(datos) {
   const lista = document.getElementById('lista-dispositivos');
   lista.innerHTML = '';
-  if (!datos) {
-    lista.innerHTML = '<p class="lista-vacia">Sin dispositivos aun.</p>';
-    return;
-  }
+  if (!datos) { lista.innerHTML = '<p class="lista-vacia">Sin dispositivos aun.</p>'; return; }
   Object.keys(datos).forEach(id => {
     const dev  = datos[id];
     const fila = document.createElement('div');
@@ -168,7 +172,7 @@ function actualizarLista(datos) {
     fila.innerHTML = `
       <div class="lista-info">
         <strong>${dev.nombre}</strong>
-        <span class="lista-meta">${dev.tipo} &bull; ${dev.ubicacion} &bull; ID: ${id}</span>
+        <span class="lista-meta">${dev.tipo} &bull; ${dev.ubicacion} &bull; <code>${id}</code></span>
       </div>
       <button class="btn-eliminar" onclick="eliminarDispositivo('${id}')">Eliminar</button>`;
     lista.appendChild(fila);
@@ -182,12 +186,8 @@ function agregarDispositivo() {
   const tipo      = document.getElementById('d-tipo').value;
   const id        = id_raw.replace(/\s+/g, '_').toLowerCase();
 
-  if (!nombre || !id || !ubicacion) {
-    msgDis('Completa todos los campos.', 'error'); return;
-  }
-  if (!/^[a-zA-Z0-9_]+$/.test(id)) {
-    msgDis('ID solo puede tener letras, numeros y guion bajo.', 'error'); return;
-  }
+  if (!nombre || !id || !ubicacion) { msgDis('Completa todos los campos.', 'error'); return; }
+  if (!/^[a-zA-Z0-9_]+$/.test(id)) { msgDis('ID solo puede tener letras, numeros y guion bajo.', 'error'); return; }
 
   db.ref('/dispositivos/' + id).set({ nombre, ubicacion, tipo, estado: false })
     .then(() => {
