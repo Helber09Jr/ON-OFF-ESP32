@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel IoT &mdash; Control de Foco</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="pagina-panel">
+
+  <header class="barra-top">
+    <div class="info-usuario">
+      <span class="punto-verde">&#9679;</span>
+      <span id="email-usuario">cargando...</span>
+    </div>
+    <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
+  </header>
+
+  <main>
+    <div class="tarjeta" id="tarjeta">
+
+      <h2>Control de Foco</h2>
+      <p class="subtarjeta">Habitaci&oacute;n Principal</p>
+
+      <div class="foco-contenedor" id="foco-contenedor">
+        <svg id="foco-svg" viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="40" cy="38" rx="36" ry="36" class="foco-brillo"/>
+          <path d="M40 6 C22 6 8 20 8 38 C8 53 17 65 28 71 L28 82 L52 82 L52 71 C63 65 72 53 72 38 C72 20 58 6 40 6 Z" class="foco-bola"/>
+          <path d="M35 70 L35 60 Q40 54 45 60 L45 70" class="foco-filamento"/>
+          <rect x="28" y="82" width="24" height="6" rx="2" class="foco-base"/>
+          <rect x="30" y="88" width="20" height="6" rx="2" class="foco-base"/>
+          <rect x="32" y="94" width="16" height="5" rx="2" class="foco-base"/>
+        </svg>
+      </div>
+
+      <div class="estado-badge badge-off" id="estado-badge">
+        <span id="texto-estado">APAGADO</span>
+      </div>
+
+      <div class="botones-control">
+        <button class="btn-encender" onclick="encender()">
+          &#9889; ENCENDER
+        </button>
+        <button class="btn-apagar" onclick="apagar()">
+          &#9711; APAGAR
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/panel.js"></script>
+</body>
+</html>
