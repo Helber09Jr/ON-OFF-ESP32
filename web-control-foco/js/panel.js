@@ -103,16 +103,21 @@ function actualizarGrid(datos) {
 }
 
 function crearCard(id, dev) {
+  // Valores por defecto para nodos creados manualmente en Firebase
+  const nombre    = dev.nombre    || id;
+  const ubicacion = dev.ubicacion || '-';
+  const tipo      = dev.tipo      || 'Dispositivo';
+
   const div = document.createElement('div');
   div.id        = 'card-' + id;
   div.className = 'tarjeta dis-card' + (dev.estado ? ' encendido' : '');
   div.innerHTML = `
     <div class="dis-header">
-      <span class="dis-tipo-chip">${dev.tipo}</span>
+      <span class="dis-tipo-chip">${tipo}</span>
       <span class="dis-id">#${id}</span>
     </div>
-    <h3 class="dis-nombre">${dev.nombre}</h3>
-    <p class="dis-ubic">${dev.ubicacion}</p>
+    <h3 class="dis-nombre">${nombre}</h3>
+    <p class="dis-ubic">${ubicacion}</p>
     <div class="foco-contenedor${dev.estado ? ' foco-on' : ''}" id="foco-${id}">
       ${SVG_FOCO}
     </div>
@@ -157,7 +162,11 @@ function actualizarCard(id, estado) {
 
 function toggleDispositivo(id) {
   const ref = db.ref('/dispositivos/' + id + '/estado');
-  ref.once('value', snap => ref.set(!snap.val()));
+  ref.once('value', snap => {
+    ref.set(!snap.val()).catch(() => {
+      msgDis('Error al cambiar estado. Verifica las reglas de Firebase.', 'error');
+    });
+  });
 }
 
 // ---- LISTA ADMIN ----
@@ -171,8 +180,8 @@ function actualizarLista(datos) {
     fila.className = 'lista-item';
     fila.innerHTML = `
       <div class="lista-info">
-        <strong>${dev.nombre}</strong>
-        <span class="lista-meta">${dev.tipo} &bull; ${dev.ubicacion} &bull; <code>${id}</code></span>
+        <strong>${dev.nombre || id}</strong>
+        <span class="lista-meta">${dev.tipo || 'Dispositivo'} &bull; ${dev.ubicacion || '-'} &bull; <code>${id}</code></span>
       </div>
       <button class="btn-eliminar" onclick="eliminarDispositivo('${id}')">Eliminar</button>`;
     lista.appendChild(fila);
