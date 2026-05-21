@@ -3,24 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Panel IoT &mdash; Control de Foco</title>
+  <title>Panel IoT — UNJBG ESIS</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="pagina-panel">
 
-  <header class="barra-top">
-    <div class="info-usuario">
-      <span class="punto-verde">&#9679;</span>
-      <span id="email-usuario">cargando...</span>
+  <div class="header-inst">
+    <div class="header-inst-izq">
+      <img src="img/esis.png" alt="ESIS" class="logo-esis" onerror="this.style.display='none'">
+      <div class="header-inst-texto">
+        <span class="inst-siglas">UNJBG | FAING | ESIS</span>
+        <span class="inst-titulo-completo">Sistema IoT de Control de Iluminacion</span>
+      </div>
     </div>
-    <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
-  </header>
+    <span class="grupo-chip">Grupo 05</span>
+  </div>
+
+  <nav class="navbar">
+    <div class="nav-links" id="nav-links">
+      <a href="#" class="nav-link activo" onclick="cerrarMenu()">Inicio</a>
+      <a href="#" class="nav-link" onclick="cerrarMenu()">Dispositivo</a>
+      <a href="#" class="nav-link" onclick="cerrarMenu()">Proyecto</a>
+      <a href="#" class="nav-link nav-salir" onclick="cerrarSesion(); return false;">Salir</a>
+    </div>
+    <span class="nav-usuario" id="email-usuario"></span>
+    <button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </nav>
 
   <main>
     <div class="tarjeta" id="tarjeta">
 
       <h2>Control de Foco</h2>
-      <p class="subtarjeta">Habitaci&oacute;n Principal</p>
+      <p class="subtarjeta">Habitacion Principal</p>
 
       <div class="foco-contenedor" id="foco-contenedor">
         <svg id="foco-svg" viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg">
@@ -37,17 +55,23 @@
         <span id="texto-estado">APAGADO</span>
       </div>
 
-      <div class="botones-control">
-        <button class="btn-encender" onclick="encender()">
-          &#9889; ENCENDER
-        </button>
-        <button class="btn-apagar" onclick="apagar()">
-          &#9711; APAGAR
-        </button>
-      </div>
+      <button id="btn-toggle" class="btn-toggle btn-encender-mode" onclick="toggleFoco()">
+        ENCENDER
+      </button>
 
     </div>
   </main>
+
+  <footer class="footer">
+    <div class="footer-inst">
+      <span>UNJBG</span><span class="sep">|</span>
+      <span>FAING</span><span class="sep">|</span>
+      <span>ESIS</span>
+    </div>
+    <div class="footer-grupo">
+      Grupo 05 &mdash; Helber Lopez &bull; Pablo Mamani &bull; Fernando Briceno
+    </div>
+  </footer>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>

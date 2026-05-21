@@ -3,26 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Control de Foco IoT</title>
+  <title>Control de Iluminacion IoT</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="pagina-login">
 
+  <div class="fondo-efectos">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="barrido barrido-1"></div>
+    <div class="barrido barrido-2"></div>
+  </div>
+
   <div class="contenedor-login">
 
-    <div class="icono-top">
-      <svg viewBox="0 0 80 110" xmlns="http://www.w3.org/2000/svg" width="72" height="72">
-        <ellipse cx="40" cy="38" rx="34" ry="34" class="brillo-login"/>
-        <path d="M40 6 C22 6 8 20 8 38 C8 53 17 65 28 71 L28 82 L52 82 L52 71 C63 65 72 53 72 38 C72 20 58 6 40 6 Z" class="bola-login"/>
-        <path d="M35 70 L35 60 Q40 54 45 60 L45 70" class="filamento-login"/>
-        <rect x="28" y="82" width="24" height="6" rx="2" class="base-login"/>
-        <rect x="30" y="88" width="20" height="6" rx="2" class="base-login"/>
-        <rect x="32" y="94" width="16" height="5" rx="2" class="base-login"/>
-      </svg>
+    <div class="login-inst">
+      <img src="img/esis.png" alt="ESIS" class="logo-esis-login" onerror="this.style.display='none'">
+      <div class="login-inst-texto">
+        <span class="inst-siglas">UNJBG | FAING | ESIS</span>
+        <span class="inst-sub">Ing. en Informatica y Sistemas</span>
+      </div>
     </div>
 
-    <h1>Control de Foco</h1>
-    <p class="subtitulo">Sistema IoT &middot; ESP32</p>
+    <div class="login-divider"></div>
+
+    <h1>Sistema IoT</h1>
+    <p class="subtitulo">Control de Iluminacion</p>
 
     <div id="mensaje" class="mensaje oculto"></div>
 
@@ -32,12 +39,14 @@
     </div>
 
     <div class="form-grupo">
-      <label for="clave">Contrase&ntilde;a</label>
-      <input type="password" id="clave" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password">
+      <label for="clave">Contrasena</label>
+      <input type="password" id="clave" placeholder="Contrasena" autocomplete="current-password">
     </div>
 
-    <button class="btn-primary" onclick="iniciarSesion()">Iniciar Sesi&oacute;n</button>
+    <button class="btn-primary" onclick="iniciarSesion()">Iniciar Sesion</button>
     <button class="btn-secondary" onclick="crearCuenta()">Crear Cuenta</button>
+
+    <p class="login-grupo">Grupo 05</p>
 
   </div>
 
