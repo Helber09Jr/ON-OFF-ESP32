@@ -126,7 +126,7 @@ function crearCard(id, dev) {
     </div>
     <button id="btn-${id}"
       class="btn-toggle ${dev.estado ? 'btn-apagar-mode' : 'btn-encender-mode'}"
-      onclick="toggleDispositivo('${id}')">
+      onclick="cambiarEstadoDispositivo('${id}')">
       ${dev.estado ? 'APAGAR' : 'ENCENDER'}
     </button>`;
   return div;
@@ -160,10 +160,17 @@ function actualizarCard(id, estado) {
   }
 }
 
-function toggleDispositivo(id) {
-  const ref = db.ref('/dispositivos/' + id + '/estado');
-  ref.once('value', snap => {
-    ref.set(!snap.val()).catch(() => {
+function cambiarEstadoDispositivo(idDispositivo) {
+  // Apunta a la ruta del estado en Firebase: /dispositivos/{id}/estado
+  const rutaEstado = db.ref('/dispositivos/' + idDispositivo + '/estado');
+
+  // Lee el valor actual una sola vez
+  rutaEstado.once('value', function(instantanea) {
+    const estadoActual = instantanea.val(); // true (encendido) o false (apagado)
+    const nuevoEstado  = !estadoActual;     // invierte: true->false  /  false->true
+
+    // Guarda el nuevo estado en Firebase (el ESP32 lo leerá al instante)
+    rutaEstado.set(nuevoEstado).catch(function() {
       msgDis('Error al cambiar estado. Verifica las reglas de Firebase.', 'error');
     });
   });
