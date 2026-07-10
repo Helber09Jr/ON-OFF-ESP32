@@ -428,17 +428,20 @@ body {
    ASISTENTE NOVA — ORB ENTITY
    ══════════════════════════════════════════ */
 
-/* Fixed orb container — bottom-right */
+/* Fixed orb container — posición gestionada por JS (arrastrable) */
 .voz-controles {
   position: fixed;
-  bottom: 44px;
+  bottom: 44px;   /* fallback antes de que JS tome control */
   right: 32px;
   z-index: 50;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  pointer-events: none; /* children re-enable */
+  pointer-events: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Feedback chip floats above the orb */
@@ -481,11 +484,10 @@ body {
   align-items: center;
   justify-content: center;
   gap: 3px;
-  cursor: pointer;
+  cursor: grab;
   font-family: inherit;
   transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .35s, border-color .35s;
   pointer-events: all;
-  /* prevent text select */
   user-select: none;
   -webkit-user-select: none;
 }

@@ -500,3 +500,98 @@ function setEstiloNova(estado) {
   if (dot)  dot.className  = 'nova-dot dot-' + estado;
   if (bars) bars.className = 'nova-bars' + (estado === 'escuchando' ? ' bars-activo' : '');
 }
+
+// ── NOVA ORB — ARRASTRABLE CON SNAP A ESQUINA ──
+(function initNovaDrag() {
+  const wrap = document.querySelector('.voz-controles');
+  const btn  = document.getElementById('btn-nova');
+  if (!wrap || !btn) return;
+
+  const MARGIN = 28;
+  let dragging = false, moved = false;
+  let ox = 0, oy = 0, sx = 0, sy = 0, pid = null;
+
+  function applyCorner(onRight, onBottom, animate) {
+    if (animate) {
+      wrap.style.transition = 'left .35s cubic-bezier(.34,1.4,.64,1), top .35s cubic-bezier(.34,1.4,.64,1)';
+      setTimeout(() => { wrap.style.transition = ''; }, 380);
+    }
+    wrap.style.right  = 'auto';
+    wrap.style.bottom = 'auto';
+    wrap.style.left   = onRight  ? (window.innerWidth  - wrap.offsetWidth  - MARGIN) + 'px'
+                                 : MARGIN + 'px';
+    wrap.style.top    = onBottom ? (window.innerHeight - wrap.offsetHeight - MARGIN) + 'px'
+                                 : MARGIN + 'px';
+    try { localStorage.setItem('nova-corner', JSON.stringify({ onRight, onBottom })); } catch(e) {}
+  }
+
+  // Posicion inicial: restaurar guardada o default esquina inferior derecha
+  function initPosition() {
+    wrap.style.position = 'fixed';
+    wrap.style.right = 'auto';
+    wrap.style.bottom = 'auto';
+    try {
+      const s = JSON.parse(localStorage.getItem('nova-corner'));
+      if (s) { applyCorner(s.onRight, s.onBottom, false); return; }
+    } catch(e) {}
+    // default: inferior derecha
+    wrap.style.left = (window.innerWidth  - wrap.offsetWidth  - MARGIN) + 'px';
+    wrap.style.top  = (window.innerHeight - wrap.offsetHeight - MARGIN) + 'px';
+  }
+
+  // Esperar a que el DOM esté pintado para leer dimensiones reales
+  requestAnimationFrame(initPosition);
+  window.addEventListener('resize', () => {
+    try {
+      const s = JSON.parse(localStorage.getItem('nova-corner'));
+      if (s) applyCorner(s.onRight, s.onBottom, false);
+    } catch(e) { initPosition(); }
+  });
+
+  wrap.style.touchAction = 'none';
+
+  wrap.addEventListener('pointerdown', e => {
+    if (e.target.closest('.voz-feedback')) return;
+    pid = e.pointerId;
+    dragging = true;
+    moved    = false;
+    wrap.setPointerCapture(pid);
+    const r = wrap.getBoundingClientRect();
+    wrap.style.transition = 'none';
+    wrap.style.left = r.left + 'px';
+    wrap.style.top  = r.top  + 'px';
+    ox = e.clientX - r.left;
+    oy = e.clientY - r.top;
+    sx = e.clientX;
+    sy = e.clientY;
+    wrap.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+
+  wrap.addEventListener('pointermove', e => {
+    if (!dragging || e.pointerId !== pid) return;
+    const W = window.innerWidth, H = window.innerHeight;
+    const r = wrap.getBoundingClientRect();
+    const nx = Math.max(0, Math.min(W - r.width,  e.clientX - ox));
+    const ny = Math.max(0, Math.min(H - r.height, e.clientY - oy));
+    wrap.style.left = nx + 'px';
+    wrap.style.top  = ny + 'px';
+    if (Math.abs(e.clientX - sx) > 5 || Math.abs(e.clientY - sy) > 5) moved = true;
+  });
+
+  wrap.addEventListener('pointerup', e => {
+    if (!dragging || e.pointerId !== pid) return;
+    dragging = false;
+    wrap.style.cursor = '';
+    if (!moved) return;
+    const r  = wrap.getBoundingClientRect();
+    const cx = r.left + r.width  / 2;
+    const cy = r.top  + r.height / 2;
+    applyCorner(cx > window.innerWidth / 2, cy > window.innerHeight / 2, true);
+  });
+
+  // Evitar que un arrastre dispare el toggleNova
+  btn.addEventListener('click', e => {
+    if (moved) { e.stopImmediatePropagation(); moved = false; }
+  }, true);
+})();
