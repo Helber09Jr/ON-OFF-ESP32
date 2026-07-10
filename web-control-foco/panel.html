@@ -43,18 +43,15 @@
       <span id="sec-contador" class="sec-contador">--</span>
       <div class="voz-controles">
         <div id="voz-feedback" class="voz-feedback oculto"></div>
-        <button class="btn-yarwis yarwis-inactivo" id="btn-yarwis"
-                onclick="toggleYarwis()" title="Activar asistente Yarwis">
-          <span class="yarwis-dot" id="yarwis-dot"></span>
-          YARWIS
-        </button>
-        <button class="btn-mic" id="btn-mic" onclick="iniciarVoz()" title="Comando rapido de voz">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" fill="currentColor"/>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="12" y1="19" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="8" y1="23" x2="16" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
+        <button class="btn-nova nova-inactivo" id="btn-nova"
+                onclick="toggleNova()" title="Activar asistente NOVA">
+          <span class="nova-dot" id="nova-dot"></span>
+          <span class="nova-bars" id="nova-bars">
+            <span class="nova-bar"></span>
+            <span class="nova-bar"></span>
+            <span class="nova-bar"></span>
+          </span>
+          NOVA
         </button>
       </div>
     </div>
@@ -73,7 +70,6 @@
       <h3 class="sec-titulo">Gestion de Dispositivos</h3>
     </div>
     <div class="form-dis-wrap">
-
       <div class="card-gestion">
         <h4 class="gestion-titulo">Agregar Dispositivo</h4>
         <p class="gestion-sub">El ID debe coincidir con el configurado en el ESP32</p>
@@ -102,14 +98,12 @@
         </div>
         <button class="btn-primary" style="margin-top:12px" onclick="agregarDispositivo()">Agregar Dispositivo</button>
       </div>
-
       <div class="card-gestion">
         <h4 class="gestion-titulo">Dispositivos Registrados</h4>
         <div id="lista-dispositivos">
           <p class="lista-vacia">Sin dispositivos aun.</p>
         </div>
       </div>
-
     </div>
   </section>
 
