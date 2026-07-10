@@ -226,3 +226,134 @@ function msgDis(texto, tipo) {
   msg.className   = 'mensaje ' + tipo;
   setTimeout(() => { msg.className = 'mensaje oculto'; }, 3500);
 }
+
+// ---- CONTROL POR VOZ ----
+let reconocimientoVoz = null;
+let escuchandoVoz     = false;
+
+function iniciarVoz() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    mostrarFeedbackVoz('Tu navegador no soporta reconocimiento de voz.', 'error');
+    return;
+  }
+
+  // Si ya estaba escuchando, detener
+  if (escuchandoVoz) {
+    detenerVoz();
+    return;
+  }
+
+  reconocimientoVoz               = new SpeechRecognition();
+  reconocimientoVoz.lang          = 'es-ES';
+  reconocimientoVoz.interimResults = false;
+  reconocimientoVoz.maxAlternatives = 1;
+  reconocimientoVoz.continuous    = false;
+
+  reconocimientoVoz.onresult = function(evento) {
+    const textoEscuchado = evento.results[0][0].transcript.toLowerCase().trim();
+    mostrarFeedbackVoz('"' + textoEscuchado + '"', 'neutro');
+    procesarComandoVoz(textoEscuchado);
+  };
+
+  reconocimientoVoz.onerror = function() {
+    mostrarFeedbackVoz('No se entendio el comando.', 'error');
+    detenerVoz();
+  };
+
+  reconocimientoVoz.onend = function() {
+    detenerVoz();
+  };
+
+  escuchandoVoz = true;
+  actualizarBotonMic(true);
+  mostrarFeedbackVoz('Escuchando...', 'escuchando');
+  reconocimientoVoz.start();
+}
+
+function detenerVoz() {
+  escuchandoVoz = false;
+  actualizarBotonMic(false);
+  if (reconocimientoVoz) {
+    try { reconocimientoVoz.stop(); } catch (e) {}
+    reconocimientoVoz = null;
+  }
+}
+
+function actualizarBotonMic(activo) {
+  const btn = document.getElementById('btn-mic');
+  if (!btn) return;
+  if (activo) {
+    btn.classList.add('mic-activo');
+    btn.title = 'Detener';
+  } else {
+    btn.classList.remove('mic-activo');
+    btn.title = 'Comando de voz';
+  }
+}
+
+function procesarComandoVoz(texto) {
+  // Detectar accion: encender o apagar
+  let accion = null;
+  if (/encend|prend|activ/.test(texto)) {
+    accion = 'encender';
+  } else if (/apag|desactiv/.test(texto)) {
+    accion = 'apagar';
+  }
+
+  if (!accion) {
+    mostrarFeedbackVoz('Di "encender" o "apagar" + nombre del dispositivo.', 'info');
+    return;
+  }
+
+  // Buscar dispositivo por nombre o ID en cache_devs
+  let idEncontrado  = null;
+  let mejorPuntaje  = 0;
+
+  Object.keys(cache_devs).forEach(id => {
+    const nombre = (cache_devs[id].nombre || id).toLowerCase();
+    // Coincidencia completa del nombre o de alguna palabra del nombre (>2 letras)
+    const coincide = texto.includes(nombre) ||
+      nombre.split(' ').some(p => p.length > 2 && texto.includes(p));
+    if (coincide && nombre.length > mejorPuntaje) {
+      mejorPuntaje  = nombre.length;
+      idEncontrado  = id;
+    }
+  });
+
+  // Si no se encontro por nombre, intentar por ID
+  if (!idEncontrado) {
+    Object.keys(cache_devs).forEach(id => {
+      if (texto.includes(id.toLowerCase())) idEncontrado = id;
+    });
+  }
+
+  if (!idEncontrado) {
+    mostrarFeedbackVoz('No se reconocio ningun dispositivo en el comando.', 'error');
+    return;
+  }
+
+  const dev            = cache_devs[idEncontrado];
+  const nombre         = dev.nombre || idEncontrado;
+  const quiereEncender = (accion === 'encender');
+
+  // Avisar si ya esta en ese estado
+  if (quiereEncender === dev.estado) {
+    mostrarFeedbackVoz(nombre + ' ya esta ' + (dev.estado ? 'encendido' : 'apagado') + '.', 'info');
+    return;
+  }
+
+  cambiarEstadoDispositivo(idEncontrado);
+  mostrarFeedbackVoz((quiereEncender ? 'Encendiendo ' : 'Apagando ') + nombre + '...', 'exito');
+}
+
+function mostrarFeedbackVoz(texto, tipo) {
+  const el = document.getElementById('voz-feedback');
+  if (!el) return;
+  el.textContent = texto;
+  el.className   = 'voz-feedback voz-' + tipo;
+  clearTimeout(el._timer);
+  if (tipo !== 'escuchando') {
+    el._timer = setTimeout(() => { el.className = 'voz-feedback oculto'; }, 3500);
+  }
+}
