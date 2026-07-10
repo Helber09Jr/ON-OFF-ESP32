@@ -39,10 +39,14 @@
   <!-- Inicio -->
   <section id="sec-inicio" class="seccion">
     <div class="sec-barra">
-      <h3 class="sec-titulo">Dispositivos</h3>
-      <span id="sec-contador" class="sec-contador">--</span>
+      <!-- izquierda: titulo + contador -->
+      <div class="sec-izq">
+        <h3 class="sec-titulo">Dispositivos</h3>
+        <span id="sec-contador" class="sec-contador">--</span>
+      </div>
+
+      <!-- centro: NOVA orb electrico -->
       <div class="voz-controles">
-        <div id="voz-feedback" class="voz-feedback oculto"></div>
         <button class="btn-nova nova-inactivo" id="btn-nova"
                 onclick="toggleNova()" title="Activar / desactivar asistente NOVA">
           <span class="nova-orb-inner">
@@ -55,7 +59,11 @@
           </span>
           <span class="nova-label">NOVA</span>
         </button>
+        <div id="voz-feedback" class="voz-feedback oculto"></div>
       </div>
+
+      <!-- derecha: espacio espejo para centrar el orb -->
+      <div class="sec-der"></div>
     </div>
     <div class="dispositivos-grid" id="dispositivos-grid">
       <div class="sin-dispositivos oculto" id="sin-dispositivos">
