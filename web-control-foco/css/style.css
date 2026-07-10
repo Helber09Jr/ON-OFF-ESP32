@@ -20,6 +20,7 @@
   --gris-osc:  #3d5068;
   --card-bg:   rgba(12, 22, 44, 0.72);
   --card-borde: rgba(255,255,255,0.07);
+  --verde:     #22c55e;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -33,7 +34,6 @@ body {
 
 /* ==============================
    LOGIN — FONDO PREMIUM
-   Coloca img/esis.jpg para fondo foto.
 ============================== */
 .pagina-login {
   position: relative;
@@ -67,11 +67,8 @@ body {
   z-index: -2;
 }
 
-/* Orbs */
 .fondo-efectos { position:fixed; inset:0; z-index:-1; pointer-events:none; overflow:hidden; }
-
 .orb { position:absolute; border-radius:50%; filter:blur(100px); }
-
 .orb-1 {
   width:550px; height:550px;
   background: radial-gradient(circle, rgba(56,189,248,0.18) 0%, transparent 70%);
@@ -97,7 +94,6 @@ body {
   66%     { transform:translate(-18px,28px) scale(0.94); }
 }
 
-/* Rayos de luz */
 .barrido {
   position:absolute; width:1.5px; height:220%; top:-60%;
   background: linear-gradient(to bottom,
@@ -117,14 +113,13 @@ body {
 }
 
 /* ==============================
-   LOGIN — TARJETA PREMIUM
+   LOGIN — TARJETA
 ============================== */
 @keyframes entrada-card {
   from { opacity:0; transform:translateY(28px) scale(0.98); }
   to   { opacity:1; transform:translateY(0) scale(1); }
 }
 
-/* Borde con beam de luz que GIRA solo la luz, NO la tarjeta */
 @keyframes beam-move {
   to { --beam-angle: 360deg; }
 }
@@ -132,11 +127,7 @@ body {
 .contenedor-login {
   position: relative;
   z-index: 1;
-  background: linear-gradient(
-    160deg,
-    rgba(10,20,40,0.88) 0%,
-    rgba(6,14,30,0.82) 100%
-  );
+  background: linear-gradient(160deg, rgba(10,20,40,0.88) 0%, rgba(6,14,30,0.82) 100%);
   border-radius: 24px;
   padding: 48px 44px;
   width: 100%;
@@ -153,7 +144,6 @@ body {
   animation: entrada-card 0.8s cubic-bezier(0.16,1,0.3,1);
 }
 
-/* El beam gira solo el gradiente, la tarjeta NO se mueve */
 .contenedor-login::after {
   content: '';
   position: absolute;
@@ -179,7 +169,6 @@ body {
   pointer-events: none;
 }
 
-/* Glow suave y estatico alrededor de la tarjeta */
 .contenedor-login::before {
   content: '';
   position: absolute;
@@ -196,7 +185,6 @@ body {
   50%     { opacity:1;   transform:scale(1.04); }
 }
 
-/* Header login */
 .login-inst {
   display: flex;
   align-items: center;
@@ -360,7 +348,6 @@ body {
     linear-gradient(170deg, #040c1e 0%, #060f24 50%, #040c1e 100%);
 }
 
-/* Linea premium en el tope */
 .pagina-panel::before {
   content: '';
   display: block;
@@ -531,14 +518,76 @@ body {
   letter-spacing: 0.3px;
 }
 
-/* ---- Boton microfono ---- */
+/* ---- Controles de voz ---- */
 .voz-controles {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
+/* Boton YARWIS */
+.btn-yarwis {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 15px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.25s;
+  white-space: nowrap;
+}
+
+/* Punto indicador de estado */
+.yarwis-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+/* Estados del boton YARWIS */
+.yarwis-inactivo {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.09);
+  color: var(--gris-osc);
+}
+.yarwis-inactivo .yarwis-dot, .dot-inactivo {
+  background: var(--gris-osc);
+}
+
+.yarwis-espera {
+  background: rgba(34,197,94,0.07);
+  border: 1px solid rgba(34,197,94,0.3);
+  color: #4ade80;
+}
+.yarwis-espera .yarwis-dot, .dot-espera {
+  background: var(--verde);
+  animation: dot-latir 2.2s ease-in-out infinite;
+}
+
+.yarwis-escuchando {
+  background: rgba(56,189,248,0.1);
+  border: 1px solid rgba(56,189,248,0.5);
+  color: var(--acento);
+  animation: mic-pulso 1s ease-in-out infinite;
+}
+.yarwis-escuchando .yarwis-dot, .dot-escuchando {
+  background: var(--acento);
+  animation: dot-latir 0.65s ease-in-out infinite;
+}
+
+@keyframes dot-latir {
+  0%,100% { opacity:1; transform:scale(1); }
+  50%     { opacity:0.4; transform:scale(0.65); }
+}
+
+/* Boton microfono (un disparo) */
 .btn-mic {
   width: 40px;
   height: 40px;
@@ -570,10 +619,20 @@ body {
 }
 
 @keyframes mic-pulso {
+  0%,100% { box-shadow: 0 0 0 0   rgba(56,189,248,0.35); }
+  50%     { box-shadow: 0 0 0 8px rgba(56,189,248,0);    }
+}
+
+.btn-mic.mic-activo {
+  animation: mic-pulso-rojo 1.2s ease-in-out infinite;
+}
+
+@keyframes mic-pulso-rojo {
   0%,100% { box-shadow: 0 0 0 0   rgba(239,68,68,0.4); }
   50%     { box-shadow: 0 0 0 8px rgba(239,68,68,0);   }
 }
 
+/* Chip de feedback de voz */
 .voz-feedback {
   font-size: 12px;
   padding: 5px 13px;
@@ -585,7 +644,8 @@ body {
   font-weight: 500;
 }
 
-.voz-escuchando { background:rgba(56,189,248,0.1);  border:1px solid rgba(56,189,248,0.28); color:var(--acento); }
+.voz-escuchando { background:rgba(56,189,248,0.1);  border:1px solid rgba(56,189,248,0.3);  color:var(--acento); }
+.voz-espera     { background:rgba(34,197,94,0.07);  border:1px solid rgba(34,197,94,0.25);  color:#4ade80; }
 .voz-exito      { background:rgba(34,197,94,0.1);   border:1px solid rgba(34,197,94,0.25);  color:#86efac; }
 .voz-error      { background:rgba(239,68,68,0.1);   border:1px solid rgba(239,68,68,0.25);  color:#fca5a5; }
 .voz-info       { background:rgba(129,140,248,0.1); border:1px solid rgba(129,140,248,0.25);color:var(--acento2); }
@@ -607,7 +667,6 @@ body {
   position: relative;
 }
 
-/* Glow ambiental detras del grid */
 .dispositivos-grid::before {
   content: '';
   position: absolute;
@@ -655,11 +714,7 @@ body {
    TARJETA DE DISPOSITIVO
 ============================== */
 .tarjeta {
-  background: linear-gradient(
-    160deg,
-    rgba(14,26,52,0.80) 0%,
-    rgba(8,16,36,0.70) 100%
-  );
+  background: linear-gradient(160deg, rgba(14,26,52,0.80) 0%, rgba(8,16,36,0.70) 100%);
   backdrop-filter: blur(40px) saturate(180%);
   border: 1px solid rgba(255,255,255,0.07);
   border-top: 1px solid rgba(255,255,255,0.13);
@@ -683,7 +738,6 @@ body {
   position: relative;
 }
 
-/* Glow ambiental debajo de la card cuando encendida */
 .dis-card.encendido::after {
   content: '';
   position: absolute;
@@ -787,7 +841,6 @@ body {
   100% { filter:drop-shadow(0 0 12px rgba(251,191,36,0.4)); }
 }
 
-/* Badge */
 .estado-badge {
   display: inline-block;
   padding: 7px 22px;
@@ -802,7 +855,6 @@ body {
 .badge-on  { background:rgba(251,191,36,0.1);  border:1px solid rgba(251,191,36,0.3);  color:var(--amarillo); }
 .badge-off { background:rgba(30,53,85,0.5);    border:1px solid rgba(30,53,85,0.8);    color:var(--gris-osc); }
 
-/* Boton toggle */
 .btn-toggle {
   width: 100%;
   padding: 16px;
@@ -940,7 +992,7 @@ body {
 .btn-eliminar:hover { background:rgba(239,68,68,0.2); }
 
 /* ==============================
-   FOOTER PREMIUM
+   FOOTER
 ============================== */
 .footer {
   padding: 28px 36px;
@@ -1017,11 +1069,12 @@ body {
     padding-left:21px;
   }
 
-  .sec-barra        { padding:20px 20px 14px; }
-  .voz-feedback     { display:none; }
+  .sec-barra         { padding:20px 20px 14px; flex-wrap:wrap; gap:10px; }
+  .voz-controles     { margin-left:0; width:100%; justify-content:flex-end; }
+  .voz-feedback      { display:none; }
   .dispositivos-grid { padding:8px 16px 40px; gap:18px; }
-  .dis-card         { max-width:100%; }
-  .form-dis-wrap    { padding:8px 16px 40px; }
-  .card-gestion     { padding:28px 22px; }
-  .footer           { padding:22px 20px; }
+  .dis-card          { max-width:100%; }
+  .form-dis-wrap     { padding:8px 16px 40px; }
+  .card-gestion      { padding:28px 22px; }
+  .footer            { padding:22px 20px; }
 }
