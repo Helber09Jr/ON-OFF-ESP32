@@ -35,6 +35,7 @@ document.addEventListener('click', e => {
 });
 
 function cerrarSesion() {
+  apagarYarwis();
   db.ref('/dispositivos').off();
   auth.signOut().then(() => { window.location.href = 'index.html'; });
 }
@@ -103,7 +104,6 @@ function actualizarGrid(datos) {
 }
 
 function crearCard(id, dev) {
-  // Valores por defecto para nodos creados manualmente en Firebase
   const nombre    = dev.nombre    || id;
   const ubicacion = dev.ubicacion || '-';
   const tipo      = dev.tipo      || 'Dispositivo';
@@ -161,15 +161,10 @@ function actualizarCard(id, estado) {
 }
 
 function cambiarEstadoDispositivo(idDispositivo) {
-  // Apunta a la ruta del estado en Firebase: /dispositivos/{id}/estado
   const rutaEstado = db.ref('/dispositivos/' + idDispositivo + '/estado');
-
-  // Lee el valor actual una sola vez
   rutaEstado.once('value', function(instantanea) {
-    const estadoActual = instantanea.val(); // true (encendido) o false (apagado)
-    const nuevoEstado  = !estadoActual;     // invierte: true->false  /  false->true
-
-    // Guarda el nuevo estado en Firebase (el ESP32 lo leerá al instante)
+    const estadoActual = instantanea.val();
+    const nuevoEstado  = !estadoActual;
     rutaEstado.set(nuevoEstado).catch(function() {
       msgDis('Error al cambiar estado. Verifica las reglas de Firebase.', 'error');
     });
@@ -227,43 +222,41 @@ function msgDis(texto, tipo) {
   setTimeout(() => { msg.className = 'mensaje oculto'; }, 3500);
 }
 
-// ---- CONTROL POR VOZ ----
+// ================================================================
+// CONTROL POR VOZ — UN DISPARO (boton microfono)
+// ================================================================
 let reconocimientoVoz = null;
 let escuchandoVoz     = false;
 
 function iniciarVoz() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
+  // Bloqueado mientras Yarwis esta activo
+  if (estadoYarwis !== 'INACTIVO') {
+    mostrarFeedbackVoz('Desactiva Yarwis primero.', 'info');
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
     mostrarFeedbackVoz('Tu navegador no soporta reconocimiento de voz.', 'error');
     return;
   }
+  if (escuchandoVoz) { detenerVoz(); return; }
 
-  // Si ya estaba escuchando, detener
-  if (escuchandoVoz) {
-    detenerVoz();
-    return;
-  }
-
-  reconocimientoVoz               = new SpeechRecognition();
+  reconocimientoVoz               = new SR();
   reconocimientoVoz.lang          = 'es-ES';
   reconocimientoVoz.interimResults = false;
   reconocimientoVoz.maxAlternatives = 1;
   reconocimientoVoz.continuous    = false;
 
   reconocimientoVoz.onresult = function(evento) {
-    const textoEscuchado = evento.results[0][0].transcript.toLowerCase().trim();
-    mostrarFeedbackVoz('"' + textoEscuchado + '"', 'neutro');
-    procesarComandoVoz(textoEscuchado);
+    const texto = evento.results[0][0].transcript.toLowerCase().trim();
+    mostrarFeedbackVoz('"' + texto + '"', 'neutro');
+    procesarComandoVoz(texto, false);
   };
-
   reconocimientoVoz.onerror = function() {
     mostrarFeedbackVoz('No se entendio el comando.', 'error');
     detenerVoz();
   };
-
-  reconocimientoVoz.onend = function() {
-    detenerVoz();
-  };
+  reconocimientoVoz.onend = function() { detenerVoz(); };
 
   escuchandoVoz = true;
   actualizarBotonMic(true);
@@ -283,45 +276,57 @@ function detenerVoz() {
 function actualizarBotonMic(activo) {
   const btn = document.getElementById('btn-mic');
   if (!btn) return;
-  if (activo) {
-    btn.classList.add('mic-activo');
-    btn.title = 'Detener';
-  } else {
-    btn.classList.remove('mic-activo');
-    btn.title = 'Comando de voz';
-  }
+  btn.classList.toggle('mic-activo', activo);
+  btn.title = activo ? 'Detener' : 'Comando rapido de voz';
 }
 
-function procesarComandoVoz(texto) {
-  // Detectar accion: encender o apagar
-  let accion = null;
-  if (/encend|prend|activ/.test(texto)) {
-    accion = 'encender';
-  } else if (/apag|desactiv/.test(texto)) {
-    accion = 'apagar';
-  }
-
-  if (!accion) {
-    mostrarFeedbackVoz('Di "encender" o "apagar" + nombre del dispositivo.', 'info');
+// ================================================================
+// PROCESAMIENTO DE COMANDOS (compartido por mic y Yarwis)
+// ================================================================
+function procesarComandoVoz(texto, conVoz) {
+  // Comando: apagar/encender TODO
+  if (/todo|todos/.test(texto)) {
+    const quiereEncender = /encend|prend|activ/.test(texto);
+    const ids = Object.keys(cache_devs);
+    if (!ids.length) {
+      mostrarFeedbackVoz('No hay dispositivos registrados.', 'info');
+      if (conVoz) hablar('No hay dispositivos registrados');
+      return;
+    }
+    ids.forEach(id => {
+      db.ref('/dispositivos/' + id + '/estado').set(quiereEncender);
+    });
+    const msg = quiereEncender ? 'Encendiendo todo...' : 'Apagando todo...';
+    mostrarFeedbackVoz(msg, 'exito');
+    if (conVoz) hablar(quiereEncender ? 'Encendiendo todo' : 'Apagando todo');
     return;
   }
 
-  // Buscar dispositivo por nombre o ID en cache_devs
-  let idEncontrado  = null;
-  let mejorPuntaje  = 0;
+  // Detectar accion individual
+  let accion = null;
+  if (/encend|prend|activ|pon|ilumina/.test(texto)) accion = 'encender';
+  else if (/apag|desactiv|quita/.test(texto))        accion = 'apagar';
+
+  if (!accion) {
+    mostrarFeedbackVoz('Di "encender" o "apagar" + nombre del dispositivo.', 'info');
+    if (conVoz) hablar('No entendi el comando');
+    return;
+  }
+
+  // Buscar dispositivo por nombre o ID
+  let idEncontrado = null;
+  let mejorPuntaje = 0;
 
   Object.keys(cache_devs).forEach(id => {
     const nombre = (cache_devs[id].nombre || id).toLowerCase();
-    // Coincidencia completa del nombre o de alguna palabra del nombre (>2 letras)
     const coincide = texto.includes(nombre) ||
       nombre.split(' ').some(p => p.length > 2 && texto.includes(p));
     if (coincide && nombre.length > mejorPuntaje) {
-      mejorPuntaje  = nombre.length;
-      idEncontrado  = id;
+      mejorPuntaje = nombre.length;
+      idEncontrado = id;
     }
   });
 
-  // Si no se encontro por nombre, intentar por ID
   if (!idEncontrado) {
     Object.keys(cache_devs).forEach(id => {
       if (texto.includes(id.toLowerCase())) idEncontrado = id;
@@ -330,6 +335,7 @@ function procesarComandoVoz(texto) {
 
   if (!idEncontrado) {
     mostrarFeedbackVoz('No se reconocio ningun dispositivo en el comando.', 'error');
+    if (conVoz) hablar('Dispositivo no encontrado');
     return;
   }
 
@@ -337,14 +343,15 @@ function procesarComandoVoz(texto) {
   const nombre         = dev.nombre || idEncontrado;
   const quiereEncender = (accion === 'encender');
 
-  // Avisar si ya esta en ese estado
   if (quiereEncender === dev.estado) {
     mostrarFeedbackVoz(nombre + ' ya esta ' + (dev.estado ? 'encendido' : 'apagado') + '.', 'info');
+    if (conVoz) hablar(nombre + ' ya esta ' + (dev.estado ? 'encendido' : 'apagado'));
     return;
   }
 
   cambiarEstadoDispositivo(idEncontrado);
   mostrarFeedbackVoz((quiereEncender ? 'Encendiendo ' : 'Apagando ') + nombre + '...', 'exito');
+  if (conVoz) hablar(nombre + (quiereEncender ? ' encendido' : ' apagado'));
 }
 
 function mostrarFeedbackVoz(texto, tipo) {
@@ -353,7 +360,146 @@ function mostrarFeedbackVoz(texto, tipo) {
   el.textContent = texto;
   el.className   = 'voz-feedback voz-' + tipo;
   clearTimeout(el._timer);
-  if (tipo !== 'escuchando') {
-    el._timer = setTimeout(() => { el.className = 'voz-feedback oculto'; }, 3500);
+  if (tipo !== 'escuchando' && tipo !== 'espera') {
+    el._timer = setTimeout(() => {
+      // Al ocultar, restaurar mensaje de espera si Yarwis esta activo
+      if (estadoYarwis === 'ESPERA_WAKE') {
+        el.textContent = 'Di "Yarwis" para activar';
+        el.className   = 'voz-feedback voz-espera';
+      } else {
+        el.className = 'voz-feedback oculto';
+      }
+    }, 3500);
   }
+}
+
+// ================================================================
+// ASISTENTE YARWIS — MODO MANOS LIBRES CON WAKE WORD
+// ================================================================
+const YARWIS_ALIASES = ['yarwis', 'jarvis', 'yarvis', 'yarwiz', 'yarbis', 'garvis', 'harris'];
+
+let reconYarwis   = null;
+let estadoYarwis  = 'INACTIVO'; // INACTIVO | ESPERA_WAKE | ESPERA_COMANDO
+let timerComando  = null;
+
+function toggleYarwis() {
+  if (estadoYarwis !== 'INACTIVO') {
+    apagarYarwis();
+  } else {
+    encenderYarwis();
+  }
+}
+
+function encenderYarwis() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    mostrarFeedbackVoz('Tu navegador no soporta reconocimiento de voz.', 'error');
+    return;
+  }
+  estadoYarwis = 'ESPERA_WAKE';
+  setEstiloYarwis('espera');
+  mostrarFeedbackVoz('Di "Yarwis" para activar', 'espera');
+  iniciarReconocimientoYarwis();
+}
+
+function apagarYarwis() {
+  estadoYarwis = 'INACTIVO';
+  clearTimeout(timerComando);
+  setEstiloYarwis('inactivo');
+  mostrarFeedbackVoz('Yarwis desactivado.', 'info');
+  if (reconYarwis) {
+    try { reconYarwis.stop(); } catch (e) {}
+    reconYarwis = null;
+  }
+}
+
+function iniciarReconocimientoYarwis() {
+  if (estadoYarwis === 'INACTIVO') return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  reconYarwis = new SR();
+  reconYarwis.lang            = 'es-ES';
+  reconYarwis.continuous      = true;
+  reconYarwis.interimResults  = true; // para detectar wake word antes de que termine la frase
+  reconYarwis.maxAlternatives = 3;
+
+  reconYarwis.onresult = manejarResultadoYarwis;
+
+  reconYarwis.onerror = function(e) {
+    // 'no-speech' y 'aborted' son normales, ignorar
+    if (e.error === 'no-speech' || e.error === 'aborted') return;
+  };
+
+  reconYarwis.onend = function() {
+    // Auto-reiniciar para mantener escucha continua
+    if (estadoYarwis !== 'INACTIVO') {
+      setTimeout(iniciarReconocimientoYarwis, 350);
+    }
+  };
+
+  try { reconYarwis.start(); } catch (e) {}
+}
+
+function manejarResultadoYarwis(evento) {
+  for (let i = evento.resultIndex; i < evento.results.length; i++) {
+    const resultado = evento.results[i];
+
+    // Juntar todas las alternativas para mayor tolerancia
+    let textoTotal = '';
+    for (let j = 0; j < resultado.length; j++) {
+      textoTotal += ' ' + resultado[j].transcript.toLowerCase();
+    }
+
+    if (estadoYarwis === 'ESPERA_WAKE') {
+      const wakeDetectado = YARWIS_ALIASES.some(alias => textoTotal.includes(alias));
+      if (wakeDetectado) {
+        estadoYarwis = 'ESPERA_COMANDO';
+        setEstiloYarwis('escuchando');
+        hablar('Te escucho');
+        mostrarFeedbackVoz('Te escucho... di el comando', 'escuchando');
+        clearTimeout(timerComando);
+        // Si no habla en 5 segundos, volver a esperar wake word
+        timerComando = setTimeout(volverAEsperaWake, 5000);
+      }
+
+    } else if (estadoYarwis === 'ESPERA_COMANDO' && resultado.isFinal) {
+      clearTimeout(timerComando);
+      const textoFinal = resultado[0].transcript.toLowerCase().trim();
+      // Ignorar si el resultado es solo el wake word repetido
+      const soloWake = YARWIS_ALIASES.some(a => textoFinal.trim() === a);
+      if (soloWake) { return; }
+      mostrarFeedbackVoz('"' + textoFinal + '"', 'neutro');
+      procesarComandoVoz(textoFinal, true);
+      setTimeout(volverAEsperaWake, 2000);
+    }
+  }
+}
+
+function volverAEsperaWake() {
+  if (estadoYarwis === 'INACTIVO') return;
+  estadoYarwis = 'ESPERA_WAKE';
+  setEstiloYarwis('espera');
+  setTimeout(() => {
+    if (estadoYarwis === 'ESPERA_WAKE') {
+      mostrarFeedbackVoz('Di "Yarwis" para activar', 'espera');
+    }
+  }, 1800);
+}
+
+function setEstiloYarwis(estado) {
+  const btn = document.getElementById('btn-yarwis');
+  const dot = document.getElementById('yarwis-dot');
+  if (btn) btn.className = 'btn-yarwis yarwis-' + estado;
+  if (dot) dot.className = 'yarwis-dot dot-' + estado;
+}
+
+// Sintesis de voz: la app habla en espanol
+function hablar(texto) {
+  if (!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const utt  = new SpeechSynthesisUtterance(texto);
+  utt.lang   = 'es-ES';
+  utt.rate   = 1.05;
+  utt.pitch  = 1.1;
+  utt.volume = 1.0;
+  speechSynthesis.speak(utt);
 }
