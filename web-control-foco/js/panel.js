@@ -1,5 +1,14 @@
 let cache_devs = {};
 
+// Ripple: track click position for CSS radial highlight on btn-toggle
+document.addEventListener('pointerdown', e => {
+  const btn = e.target.closest('.btn-toggle');
+  if (!btn) return;
+  const r = btn.getBoundingClientRect();
+  btn.style.setProperty('--rx', ((e.clientX - r.left) / r.width  * 100) + '%');
+  btn.style.setProperty('--ry', ((e.clientY - r.top)  / r.height * 100) + '%');
+});
+
 auth.onAuthStateChanged(usuario => {
   if (!usuario) { window.location.href = 'index.html'; return; }
   document.getElementById('email-usuario').textContent = usuario.email;
