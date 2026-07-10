@@ -224,14 +224,15 @@ function msgDis(texto, tipo) {
 
 // ================================================================
 // PROCESAMIENTO DE COMANDOS
-//
-// Comandos soportados:
-//   "[nombre] on"  /  "on [nombre]"   -> encender
-//   "[nombre] off" /  "off [nombre]"  -> apagar
-//   "encender [nombre]" / "apagar [nombre]"
-//   "todo on" / "apagar todo"
 // ================================================================
+let _ultimoTextoVoz = '';
+let _tiempoUltimoVoz = 0;
+
 function procesarComandoVoz(texto) {
+  const ahora = Date.now();
+  if (texto === _ultimoTextoVoz && ahora - _tiempoUltimoVoz < 3000) return;
+  _ultimoTextoVoz = texto;
+  _tiempoUltimoVoz = ahora;
   const palabras = texto.split(/\s+/);
 
   // Comando especial: TODOS los dispositivos
@@ -427,17 +428,16 @@ function manejarResultadoNova(evento) {
       estadoNova = 'ESPERA_COMANDO';
       yaEjecuto  = false;
       setEstiloNova('escuchando');
-      hablar('Te escucho');
-      mostrarFeedbackVoz('Te escucho...', 'escuchando');
       clearTimeout(timerComando);
 
       if (tieneAccion && despuesWake.length > 2) {
-        // Comando ya viene en la misma frase
+        // Comando en la misma frase — ejecutar directo, sin "Te escucho"
         yaEjecuto = true;
-        mostrarFeedbackVoz('"' + despuesWake + '"', 'neutro');
         procesarComandoVoz(despuesWake);
         setTimeout(volverAEsperaWake, 2400);
       } else {
+        hablar('Te escucho');
+        mostrarFeedbackVoz('Te escucho...', 'escuchando');
         timerComando = setTimeout(volverAEsperaWake, 5000);
       }
 
@@ -460,14 +460,11 @@ function manejarResultadoNova(evento) {
       if (resultado.isFinal) {
         clearTimeout(timerComando);
         yaEjecuto = true;
-        mostrarFeedbackVoz('"' + textoCheck + '"', 'neutro');
         procesarComandoVoz(textoCheck);
         setTimeout(volverAEsperaWake, 2400);
       } else if (tieneAccion && tieneDevice) {
-        // Resultado intermedio con accion + dispositivo: disparar ya
         clearTimeout(timerComando);
         yaEjecuto = true;
-        mostrarFeedbackVoz('"' + textoCheck + '"', 'neutro');
         procesarComandoVoz(textoCheck);
         setTimeout(volverAEsperaWake, 2400);
       }
