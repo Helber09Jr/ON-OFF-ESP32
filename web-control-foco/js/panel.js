@@ -507,59 +507,82 @@ function setEstiloNova(estado) {
   const btn  = document.getElementById('btn-nova');
   if (!wrap || !btn) return;
 
-  const MARGIN = 28;
-  let dragging = false, moved = false;
+  const MARGIN  = 28;
+  const LS_KEY  = 'nova-pos-v3'; // clave nueva descarta posiciones viejas fuera de pantalla
+  let dragging  = false, moved = false;
   let ox = 0, oy = 0, sx = 0, sy = 0, pid = null;
+  let orbW = 80, orbH = 100; // dimensiones capturadas al inicio del drag
 
-  function applyCorner(onRight, onBottom, animate) {
+  /* Mueve el orb a coordenadas left/top absolutas, clampeadas a pantalla */
+  function moveTo(left, top) {
+    const W = window.innerWidth, H = window.innerHeight;
+    wrap.style.right  = 'auto';
+    wrap.style.bottom = 'auto';
+    wrap.style.left   = Math.max(MARGIN, Math.min(W - orbW  - MARGIN, left)) + 'px';
+    wrap.style.top    = Math.max(MARGIN, Math.min(H - orbH  - MARGIN, top))  + 'px';
+  }
+
+  /* Snap a esquina más cercana con animación */
+  function snapNearest(curLeft, curTop, animate) {
+    const W = window.innerWidth, H = window.innerHeight;
+    const onRight  = (curLeft + orbW  / 2) > W / 2;
+    const onBottom = (curTop  + orbH  / 2) > H / 2;
+    const tx = onRight  ? W - orbW  - MARGIN : MARGIN;
+    const ty = onBottom ? H - orbH  - MARGIN : MARGIN;
     if (animate) {
-      wrap.style.transition = 'left .35s cubic-bezier(.34,1.4,.64,1), top .35s cubic-bezier(.34,1.4,.64,1)';
-      setTimeout(() => { wrap.style.transition = ''; }, 380);
+      wrap.style.transition = 'left .32s cubic-bezier(.34,1.4,.64,1), top .32s cubic-bezier(.34,1.4,.64,1)';
+      setTimeout(() => { wrap.style.transition = ''; }, 360);
     }
     wrap.style.right  = 'auto';
     wrap.style.bottom = 'auto';
-    wrap.style.left   = onRight  ? (window.innerWidth  - wrap.offsetWidth  - MARGIN) + 'px'
-                                 : MARGIN + 'px';
-    wrap.style.top    = onBottom ? (window.innerHeight - wrap.offsetHeight - MARGIN) + 'px'
-                                 : MARGIN + 'px';
-    try { localStorage.setItem('nova-corner', JSON.stringify({ onRight, onBottom })); } catch(e) {}
+    wrap.style.left   = tx + 'px';
+    wrap.style.top    = ty + 'px';
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ onRight, onBottom })); } catch(e) {}
   }
 
-  // Posicion inicial: restaurar guardada o default esquina inferior derecha
+  /* Posición inicial — centro superior por defecto */
   function initPosition() {
-    wrap.style.position = 'fixed';
-    wrap.style.right = 'auto';
+    orbW = wrap.offsetWidth  || 80;
+    orbH = wrap.offsetHeight || 100;
+    wrap.style.right  = 'auto';
     wrap.style.bottom = 'auto';
+    const W = window.innerWidth, H = window.innerHeight;
     try {
-      const s = JSON.parse(localStorage.getItem('nova-corner'));
-      if (s) { applyCorner(s.onRight, s.onBottom, false); return; }
+      const s = JSON.parse(localStorage.getItem(LS_KEY));
+      if (s) {
+        const tx = s.onRight  ? W - orbW  - MARGIN : MARGIN;
+        const ty = s.onBottom ? H - orbH  - MARGIN : MARGIN;
+        // Validar que la posición guardada esté dentro de pantalla
+        if (tx >= 0 && tx <= W - orbW && ty >= 0 && ty <= H - orbH) {
+          wrap.style.left = tx + 'px';
+          wrap.style.top  = ty + 'px';
+          return;
+        }
+      }
     } catch(e) {}
-    // default: inferior derecha
-    wrap.style.left = (window.innerWidth  - wrap.offsetWidth  - MARGIN) + 'px';
-    wrap.style.top  = (window.innerHeight - wrap.offsetHeight - MARGIN) + 'px';
+    // Default: centro superior
+    wrap.style.left = Math.round((W - orbW) / 2) + 'px';
+    wrap.style.top  = MARGIN + 'px';
   }
 
-  // Esperar a que el DOM esté pintado para leer dimensiones reales
   requestAnimationFrame(initPosition);
-  window.addEventListener('resize', () => {
-    try {
-      const s = JSON.parse(localStorage.getItem('nova-corner'));
-      if (s) applyCorner(s.onRight, s.onBottom, false);
-    } catch(e) { initPosition(); }
-  });
+  window.addEventListener('resize', initPosition);
 
-  wrap.style.touchAction = 'none';
-
+  /* ── DRAG ── */
   wrap.addEventListener('pointerdown', e => {
     if (e.target.closest('.voz-feedback')) return;
-    pid = e.pointerId;
+    pid      = e.pointerId;
     dragging = true;
     moved    = false;
     wrap.setPointerCapture(pid);
+    orbW = wrap.offsetWidth;
+    orbH = wrap.offsetHeight;
     const r = wrap.getBoundingClientRect();
     wrap.style.transition = 'none';
-    wrap.style.left = r.left + 'px';
-    wrap.style.top  = r.top  + 'px';
+    wrap.style.right  = 'auto';
+    wrap.style.bottom = 'auto';
+    wrap.style.left   = r.left + 'px';
+    wrap.style.top    = r.top  + 'px';
     ox = e.clientX - r.left;
     oy = e.clientY - r.top;
     sx = e.clientX;
@@ -570,12 +593,7 @@ function setEstiloNova(estado) {
 
   wrap.addEventListener('pointermove', e => {
     if (!dragging || e.pointerId !== pid) return;
-    const W = window.innerWidth, H = window.innerHeight;
-    const r = wrap.getBoundingClientRect();
-    const nx = Math.max(0, Math.min(W - r.width,  e.clientX - ox));
-    const ny = Math.max(0, Math.min(H - r.height, e.clientY - oy));
-    wrap.style.left = nx + 'px';
-    wrap.style.top  = ny + 'px';
+    moveTo(e.clientX - ox, e.clientY - oy);
     if (Math.abs(e.clientX - sx) > 5 || Math.abs(e.clientY - sy) > 5) moved = true;
   });
 
@@ -584,13 +602,12 @@ function setEstiloNova(estado) {
     dragging = false;
     wrap.style.cursor = '';
     if (!moved) return;
-    const r  = wrap.getBoundingClientRect();
-    const cx = r.left + r.width  / 2;
-    const cy = r.top  + r.height / 2;
-    applyCorner(cx > window.innerWidth / 2, cy > window.innerHeight / 2, true);
+    const curLeft = parseFloat(wrap.style.left) || 0;
+    const curTop  = parseFloat(wrap.style.top)  || 0;
+    snapNearest(curLeft, curTop, true);
   });
 
-  // Evitar que un arrastre dispare el toggleNova
+  // Evitar que arrastre dispare toggleNova
   btn.addEventListener('click', e => {
     if (moved) { e.stopImmediatePropagation(); moved = false; }
   }, true);
